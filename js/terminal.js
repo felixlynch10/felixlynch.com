@@ -379,34 +379,14 @@ const terminal = {
     },
 
     async showWelcome() {
-        const ascii = `
-<span class="ascii-art hornet">
-                    ▲
-                   ╱ ╲
-                  ╱   ╲
-                 ╱  ●  ╲
-                ╱ ┌───┐ ╲
-               ▕  │   │  ▏
-                ╲ └───┘ ╱
-                 ╲     ╱
-                  ║   ║
-             ━━━━━╬═══╬━━━━━━━━┓
-                  ║   ║        ┃
-                 ╱│   │╲       ┃
-                ╱ │   │ ╲      ┃
-               ╱  │   │  ╲     ┃
-              ╱  ╱     ╲  ╲
-             ╱  ╱       ╲  ╲
-            ▕  ▕         ▏  ▏
-</span>
-<span class="output-highlight">
-  ╔═══════════════════════════════════════╗
-  ║   FELIX LYNCH  ·  Developer           ║
-  ╚═══════════════════════════════════════╝
-</span>`;
-
-        // ASCII art appears instantly
-        this.print(ascii);
+        // Knight image with title
+        this.print('<div class="welcome-container">');
+        this.print('<img src="assets/knight.png" alt="The Knight" class="welcome-image">');
+        this.print('<div class="welcome-text">');
+        this.print('<span class="output-highlight welcome-title">FELIX LYNCH</span>');
+        this.print('<span class="output-dim">Developer</span>');
+        this.print('</div>');
+        this.print('</div>');
         this.print('');
 
         // Welcome message types out

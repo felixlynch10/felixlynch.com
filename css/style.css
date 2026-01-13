@@ -266,6 +266,31 @@ body {
     color: var(--hornet-red);
 }
 
+/* Welcome section */
+.welcome-container {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 0;
+}
+
+.welcome-image {
+    width: 120px;
+    height: auto;
+    filter: drop-shadow(0 0 10px rgba(160, 208, 216, 0.3));
+}
+
+.welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.welcome-title {
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
 /* Links */
 a {
     color: var(--lifeblood-blue);
@@ -390,6 +415,20 @@ a.copyable:hover {
 
     .ascii-art {
         font-size: 9px;
+    }
+
+    .welcome-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .welcome-image {
+        width: 80px;
+    }
+
+    .welcome-title {
+        font-size: 18px;
     }
 
     /* Show quick commands on mobile */
