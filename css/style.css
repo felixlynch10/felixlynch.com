@@ -126,6 +126,10 @@ body {
     opacity: 0.5;
 }
 
+.spinner {
+    color: var(--soul-cyan);
+}
+
 /* Input line */
 .input-line {
     display: flex;

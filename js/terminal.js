@@ -349,9 +349,25 @@ const terminal = {
 
     async listProjects() {
         this.print('');
-        this.print('Fetching projects from GitHub...');
+
+        // Create loading line
+        const loadingLine = document.createElement('div');
+        loadingLine.className = 'output-line';
+        loadingLine.innerHTML = '<span class="output-dim">Fetching projects </span><span class="spinner">⠋</span>';
+        this.output.appendChild(loadingLine);
+
+        const spinner = loadingLine.querySelector('.spinner');
+        const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        let frameIdx = 0;
+        const spinnerInterval = setInterval(() => {
+            frameIdx = (frameIdx + 1) % frames.length;
+            spinner.textContent = frames[frameIdx];
+        }, 80);
 
         const repos = await fetchRepos();
+
+        clearInterval(spinnerInterval);
+        loadingLine.remove();
 
         if (!repos) {
             this.print('<span class="output-error">Failed to fetch projects. Try again later.</span>');
