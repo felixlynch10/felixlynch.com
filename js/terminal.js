@@ -40,6 +40,16 @@ const terminal = {
             this.input.focus();
         });
 
+        // Quick command buttons (mobile)
+        document.querySelectorAll('.quick-cmd').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmd = btn.dataset.cmd;
+                this.executeCommand(cmd);
+                this.history.push(cmd);
+                this.historyIndex = this.history.length;
+            });
+        });
+
         // Show welcome message
         this.showWelcome();
     },

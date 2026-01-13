@@ -256,21 +256,134 @@ a.copyable:hover {
     background: var(--soul-cyan);
 }
 
+/* Quick commands bar (mobile) */
+.quick-commands {
+    display: none;
+    gap: 8px;
+    padding: 12px;
+    background: var(--void-black);
+    border-top: 1px solid var(--void-purple);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.quick-cmd {
+    padding: 8px 16px;
+    background: var(--void-dark);
+    border: 1px solid var(--void-purple);
+    border-radius: 20px;
+    color: var(--soul-cyan);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-cmd:hover,
+.quick-cmd:active {
+    background: var(--void-purple);
+    border-color: var(--soul-cyan);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     body {
-        padding: 10px;
+        padding: 0;
+        align-items: stretch;
     }
 
     .terminal {
-        min-height: 80vh;
+        min-height: 100vh;
+        max-width: 100%;
+        border-radius: 0;
+        border: none;
+    }
+
+    .terminal-header {
+        padding: 10px 12px;
+    }
+
+    .terminal-buttons span {
+        width: 10px;
+        height: 10px;
+    }
+
+    .terminal-title {
+        font-size: 12px;
+    }
+
+    .terminal-body {
+        padding: 12px;
+    }
+
+    #output {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .input-line {
+        position: sticky;
+        bottom: 0;
+        background: var(--void-dark);
+        padding: 12px 0;
+        margin: 0 -12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        border-top: 1px solid var(--void-purple);
     }
 
     .prompt {
-        font-size: 12px;
+        font-size: 11px;
+        margin-right: 6px;
     }
 
     #command-input {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        padding: 4px 0;
+    }
+
+    .ascii-art {
+        font-size: 9px;
+    }
+
+    /* Show quick commands on mobile */
+    .quick-commands {
+        display: flex;
+    }
+
+    .quick-cmd {
+        padding: 10px 14px;
         font-size: 12px;
+    }
+
+    /* Larger touch targets for links */
+    a {
+        padding: 4px 0;
+        display: inline-block;
+    }
+
+    /* Adjust project list spacing */
+    .output-line {
+        margin-bottom: 6px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+    .prompt {
+        font-size: 10px;
+    }
+
+    #command-input {
+        font-size: 14px;
+    }
+
+    .quick-cmd {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .ascii-art {
+        font-size: 7px;
     }
 }
