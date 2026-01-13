@@ -104,6 +104,12 @@ const terminal = {
             case 'clone':
                 await this.cloneProject(args[0]);
                 break;
+            case 'stats':
+                await this.showStats();
+                break;
+            case 'social':
+                this.showSocial();
+                break;
             case 'neofetch':
             case 'fastfetch':
                 this.showNeofetch();
@@ -219,7 +225,7 @@ const terminal = {
 
     autocomplete() {
         const cmd = this.input.value.toLowerCase();
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'about', 'skills', 'social', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
         const match = commands.find(c => c.startsWith(cmd));
         if (match) {
             this.input.value = match;
@@ -273,8 +279,10 @@ const terminal = {
         this.print('  <span class="output-success">grep</span> <term>  Search projects');
         this.print('  <span class="output-success">open</span> <name>  Open project on GitHub');
         this.print('  <span class="output-success">clone</span> <name> Get git clone command');
+        this.print('  <span class="output-success">stats</span>        GitHub statistics');
         this.print('  <span class="output-success">about</span>        About me');
         this.print('  <span class="output-success">skills</span>       Languages & tools');
+        this.print('  <span class="output-success">social</span>       Social links');
         this.print('  <span class="output-success">contact</span>      Contact information');
         this.print('  <span class="output-success">neofetch</span>     System info');
         this.print('  <span class="output-success">fortune</span>      Random dev wisdom');
@@ -489,6 +497,59 @@ const terminal = {
         this.print('<span class="output-info">GitHub:</span>   <a href="https://github.com/felixlynch10" target="_blank">github.com/felixlynch10</a>');
         this.print('<span class="output-info">Email:</span>    <a href="mailto:felixlynch10@gmail.com">felixlynch10@gmail.com</a>');
         this.print('<span class="output-info">Website:</span>  <a href="https://felixlynch.com">felixlynch.com</a>');
+        this.print('');
+    },
+
+    showSocial() {
+        this.print('');
+        this.print('<span class="output-highlight">═══ Social ═══</span>');
+        this.print('');
+        this.print('<span class="output-info">GitHub:</span>    <a href="https://github.com/felixlynch10" target="_blank">github.com/felixlynch10</a>');
+        this.print('<span class="output-info">Email:</span>     <a href="mailto:felixlynch10@gmail.com">felixlynch10@gmail.com</a>');
+        this.print('<span class="output-info">Website:</span>   <a href="https://felixlynch.com" target="_blank">felixlynch.com</a>');
+        this.print('');
+        this.print('<span class="output-dim">More links coming soon...</span>');
+        this.print('');
+    },
+
+    async showStats() {
+        this.print('');
+        this.print('Crunching numbers...');
+
+        const repos = await fetchRepos();
+        if (!repos) {
+            this.print('<span class="output-error">Failed to fetch stats.</span>');
+            return;
+        }
+
+        // Calculate stats
+        const totalStars = repos.reduce((sum, r) => sum + r.stargazers_count, 0);
+        const languages = {};
+        repos.forEach(r => {
+            if (r.language) {
+                languages[r.language] = (languages[r.language] || 0) + 1;
+            }
+        });
+
+        // Sort languages by count
+        const sortedLangs = Object.entries(languages)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6);
+
+        this.print('');
+        this.print('<span class="output-highlight">═══ GitHub Stats ═══</span>');
+        this.print('');
+        this.print(`<span class="output-info">Total Repos:</span>  ${repos.length}`);
+        this.print(`<span class="output-info">Total Stars:</span>  ${totalStars} ⭐`);
+        this.print('');
+        this.print('<span class="output-info">Languages:</span>');
+
+        const maxCount = sortedLangs[0]?.[1] || 1;
+        for (const [lang, count] of sortedLangs) {
+            const barLen = Math.round((count / maxCount) * 10);
+            const bar = '█'.repeat(barLen) + '░'.repeat(10 - barLen);
+            this.print(`  ${lang.padEnd(12)} <span class="output-success">${bar}</span> ${count}`);
+        }
         this.print('');
     },
 
