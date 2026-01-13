@@ -157,6 +157,9 @@ const terminal = {
             case 'visitors':
                 this.showVisitors();
                 break;
+            case 'figlet':
+                this.showFiglet(args.join(' '));
+                break;
             case 'fortune':
             case 'cowsay':
                 this.showFortune();
@@ -292,7 +295,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -957,6 +960,73 @@ const terminal = {
         this.print('');
         this.print(`<span class="output-info">You are visitor #</span><span class="output-success">${count}</span>`);
         this.print(`<span class="output-dim">(not really, this is just localStorage)</span>`);
+        this.print('');
+    },
+
+    showFiglet(text) {
+        if (!text) {
+            this.print('<span class="output-error">Usage: figlet <text></span>');
+            return;
+        }
+
+        // Simple 3-line block font
+        const font = {
+            'A': ['█▀█', '█▀█', '▀ ▀'],
+            'B': ['█▀▄', '█▀▄', '▀▀ '],
+            'C': ['█▀▀', '█  ', '▀▀▀'],
+            'D': ['█▀▄', '█ █', '▀▀ '],
+            'E': ['█▀▀', '█▀▀', '▀▀▀'],
+            'F': ['█▀▀', '█▀▀', '▀  '],
+            'G': ['█▀▀', '█ █', '▀▀▀'],
+            'H': ['█ █', '█▀█', '▀ ▀'],
+            'I': ['▀█▀', ' █ ', '▀▀▀'],
+            'J': ['  █', '  █', '▀▀ '],
+            'K': ['█ █', '█▀▄', '▀ ▀'],
+            'L': ['█  ', '█  ', '▀▀▀'],
+            'M': ['█▄█', '█ █', '▀ ▀'],
+            'N': ['█▀█', '█ █', '▀ ▀'],
+            'O': ['█▀█', '█ █', '▀▀▀'],
+            'P': ['█▀█', '█▀▀', '▀  '],
+            'Q': ['█▀█', '█ █', '▀▀█'],
+            'R': ['█▀█', '█▀▄', '▀ ▀'],
+            'S': ['█▀▀', '▀▀█', '▀▀▀'],
+            'T': ['▀█▀', ' █ ', ' ▀ '],
+            'U': ['█ █', '█ █', '▀▀▀'],
+            'V': ['█ █', '█ █', ' ▀ '],
+            'W': ['█ █', '█ █', '▀▄▀'],
+            'X': ['█ █', ' ▀ ', '█ █'],
+            'Y': ['█ █', ' █ ', ' ▀ '],
+            'Z': ['▀▀█', ' █ ', '█▀▀'],
+            ' ': ['   ', '   ', '   '],
+            '!': [' █ ', ' █ ', ' ▀ '],
+            '?': ['▀▀█', ' █ ', ' ▀ '],
+            '.': ['   ', '   ', ' ▀ '],
+            '0': ['█▀█', '█ █', '▀▀▀'],
+            '1': [' █ ', ' █ ', ' ▀ '],
+            '2': ['▀▀█', '█▀▀', '▀▀▀'],
+            '3': ['▀▀█', ' ▀█', '▀▀▀'],
+            '4': ['█ █', '▀▀█', '  ▀'],
+            '5': ['█▀▀', '▀▀█', '▀▀▀'],
+            '6': ['█▀▀', '█▀█', '▀▀▀'],
+            '7': ['▀▀█', '  █', '  ▀'],
+            '8': ['█▀█', '█▀█', '▀▀▀'],
+            '9': ['█▀█', '▀▀█', '▀▀▀']
+        };
+
+        const lines = ['', '', ''];
+        const chars = text.toUpperCase().slice(0, 12); // Limit to 12 chars
+
+        for (const char of chars) {
+            const glyph = font[char] || font['?'];
+            lines[0] += glyph[0] + ' ';
+            lines[1] += glyph[1] + ' ';
+            lines[2] += glyph[2] + ' ';
+        }
+
+        this.print('');
+        this.print(`<span class="ascii-art">${lines[0]}</span>`);
+        this.print(`<span class="ascii-art">${lines[1]}</span>`);
+        this.print(`<span class="ascii-art">${lines[2]}</span>`);
         this.print('');
     },
 
