@@ -207,6 +207,10 @@ body {
     line-height: 1.2;
 }
 
+.ascii-art.hornet {
+    color: var(--hornet-red);
+}
+
 /* Links */
 a {
     color: var(--lifeblood-blue);
