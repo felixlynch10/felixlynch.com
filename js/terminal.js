@@ -110,6 +110,15 @@ const terminal = {
             case 'social':
                 this.showSocial();
                 break;
+            case 'history':
+                this.showHistory();
+                break;
+            case 'man':
+                this.showMan(args[0]);
+                break;
+            case 'latest':
+                await this.showLatest();
+                break;
             case 'neofetch':
             case 'fastfetch':
                 this.showNeofetch();
@@ -226,7 +235,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'about', 'skills', 'social', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'history', 'man'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -539,6 +548,106 @@ const terminal = {
         this.print('<span class="output-info">Website:</span>   <a href="https://felixlynch.com" target="_blank">felixlynch.com</a>');
         this.print('');
         this.print('<span class="output-dim">More links coming soon...</span>');
+        this.print('');
+    },
+
+    showHistory() {
+        this.print('');
+        if (this.history.length === 0) {
+            this.print('<span class="output-dim">No commands in history yet.</span>');
+            return;
+        }
+        this.print('<span class="output-highlight">Command History</span>');
+        this.print('');
+        this.history.forEach((cmd, i) => {
+            this.print(`  <span class="output-dim">${String(i + 1).padStart(3)}</span>  ${cmd}`);
+        });
+        this.print('');
+    },
+
+    showMan(cmd) {
+        const manPages = {
+            ls: {
+                name: 'ls - list projects',
+                synopsis: 'ls',
+                description: 'Lists all GitHub repositories with their descriptions, languages, and star counts. Featured projects are shown first.'
+            },
+            cat: {
+                name: 'cat - show project details',
+                synopsis: 'cat <project-name>',
+                description: 'Displays detailed information about a project including description, language, stars, last update, and links.'
+            },
+            grep: {
+                name: 'grep - search projects',
+                synopsis: 'grep <search-term>',
+                description: 'Searches project names, descriptions, and languages for the given term. Matches are highlighted in the results.'
+            },
+            open: {
+                name: 'open - open project on GitHub',
+                synopsis: 'open <project-name>',
+                description: 'Opens the project\'s GitHub page in a new browser tab.'
+            },
+            clone: {
+                name: 'clone - get clone command',
+                synopsis: 'clone <project-name>',
+                description: 'Shows git clone commands (HTTPS and SSH) for the project. Click to copy to clipboard.'
+            },
+            stats: {
+                name: 'stats - GitHub statistics',
+                synopsis: 'stats',
+                description: 'Shows aggregate statistics: total repositories, total stars, and language breakdown with visual bars.'
+            },
+            skills: {
+                name: 'skills - languages and tools',
+                synopsis: 'skills',
+                description: 'Displays programming languages and tools with proficiency levels shown as visual bars.'
+            }
+        };
+
+        if (!cmd) {
+            this.print('<span class="output-error">Usage: man <command></span>');
+            this.print('<span class="output-dim">Available: ' + Object.keys(manPages).join(', ') + '</span>');
+            return;
+        }
+
+        const page = manPages[cmd.toLowerCase()];
+        if (!page) {
+            this.print(`<span class="output-error">No manual entry for ${this.escapeHtml(cmd)}</span>`);
+            return;
+        }
+
+        this.print('');
+        this.print(`<span class="output-highlight">NAME</span>`);
+        this.print(`       ${page.name}`);
+        this.print('');
+        this.print(`<span class="output-highlight">SYNOPSIS</span>`);
+        this.print(`       <span class="output-success">${page.synopsis}</span>`);
+        this.print('');
+        this.print(`<span class="output-highlight">DESCRIPTION</span>`);
+        this.print(`       ${page.description}`);
+        this.print('');
+    },
+
+    async showLatest() {
+        const repos = await fetchRepos();
+        if (!repos || repos.length === 0) {
+            this.print('<span class="output-error">Failed to fetch projects.</span>');
+            return;
+        }
+
+        // Sort by update date (most recent first)
+        const sorted = [...repos].sort((a, b) =>
+            new Date(b.updated_at) - new Date(a.updated_at)
+        );
+        const latest = sorted[0];
+        const r = formatRepo(latest);
+
+        this.print('');
+        this.print('<span class="output-highlight">Most Recently Updated</span>');
+        this.print('');
+        this.print(`  <span class="output-success">${r.name}</span>`);
+        this.print(`  <span class="output-info">${r.language}</span> · ${r.description}`);
+        this.print(`  Updated: ${r.updated}`);
         this.print('');
     },
 
