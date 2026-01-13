@@ -230,6 +230,14 @@ a:hover {
     text-decoration: underline;
 }
 
+a.copyable {
+    cursor: pointer;
+}
+
+a.copyable:hover {
+    color: var(--soul-cyan);
+}
+
 /* Scrollbar */
 .terminal-body::-webkit-scrollbar {
     width: 8px;

@@ -21,7 +21,21 @@ const terminal = {
         this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
 
         // Focus input on click anywhere in terminal
-        document.querySelector('.terminal-body').addEventListener('click', () => {
+        document.querySelector('.terminal-body').addEventListener('click', (e) => {
+            // Handle click-to-copy
+            if (e.target.classList.contains('copyable')) {
+                e.preventDefault();
+                const text = e.target.dataset.copy;
+                navigator.clipboard.writeText(text);
+                const hint = e.target.nextElementSibling;
+                if (hint && hint.classList.contains('copy-hint')) {
+                    hint.innerHTML = '<span class="output-warning">✓ copied!</span>';
+                    setTimeout(() => {
+                        hint.innerHTML = '(click to copy)';
+                    }, 2000);
+                }
+                return;
+            }
             this.input.focus();
         });
 
@@ -138,7 +152,10 @@ const terminal = {
                 this.showNeofetch();
                 break;
             case 'time':
-                this.print(`<span class="output-info">${new Date().toLocaleTimeString()}</span>`);
+                this.showTime(args);
+                break;
+            case 'visitors':
+                this.showVisitors();
                 break;
             case 'fortune':
             case 'cowsay':
@@ -188,6 +205,32 @@ const terminal = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    // GitHub-style language colors
+    getLangColor(lang) {
+        const colors = {
+            'JavaScript': '#f1e05a',
+            'TypeScript': '#3178c6',
+            'Python': '#3572A5',
+            'Rust': '#dea584',
+            'Go': '#00ADD8',
+            'Java': '#b07219',
+            'C': '#555555',
+            'C++': '#f34b7d',
+            'C#': '#178600',
+            'Ruby': '#701516',
+            'PHP': '#4F5D95',
+            'Swift': '#F05138',
+            'Kotlin': '#A97BFF',
+            'HTML': '#e34c26',
+            'CSS': '#563d7c',
+            'Shell': '#89e051',
+            'Lua': '#000080',
+            'Vim Script': '#199f4b',
+            'Unknown': '#8a8a9a'
+        };
+        return colors[lang] || colors['Unknown'];
     },
 
     clear() {
@@ -249,7 +292,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -382,9 +425,10 @@ const terminal = {
             const r = formatRepo(repo);
             const featured = FEATURED_REPOS.includes(r.name) ? ' <span class="output-warning">★ featured</span>' : '';
             const stars = r.stars > 0 ? ` ⭐${r.stars}` : '';
+            const langColor = this.getLangColor(r.language);
 
             this.print(`  <span class="output-success">${r.name}</span>${featured}${stars}`);
-            this.print(`  <span class="output-info">${r.language}</span> · ${r.description.substring(0, 60)}${r.description.length > 60 ? '...' : ''}`);
+            this.print(`  <span style="color:${langColor}">●</span> <span class="output-info">${r.language}</span> · ${r.description.substring(0, 60)}${r.description.length > 60 ? '...' : ''}`);
             this.print('');
         }
 
@@ -536,7 +580,7 @@ const terminal = {
         this.print(`<span class="output-info">Stars:</span>       ${r.stars}`);
         this.print(`<span class="output-info">Updated:</span>     ${r.updated}`);
         this.print('');
-        this.print(`<span class="output-info">GitHub:</span>      <a href="${r.url}" target="_blank">${r.url}</a>`);
+        this.print(`<span class="output-info">GitHub:</span>      <a href="${r.url}" target="_blank" class="copyable" data-copy="${r.url}">${r.url}</a> <span class="output-dim copy-hint">(click to copy)</span>`);
         if (r.homepage) {
             this.print(`<span class="output-info">Website:</span>     <a href="${r.homepage}" target="_blank">${r.homepage}</a>`);
         }
@@ -862,6 +906,57 @@ const terminal = {
         this.print(`<span class="output-info">Language:</span>  ${lang}`);
         this.print(`<span class="output-info">Viewport:</span>  ${width}x${height}`);
         this.print(`<span class="output-info">Screen:</span>    ${screenW}x${screenH}`);
+        this.print('');
+    },
+
+    showTime(args) {
+        const now = new Date();
+        this.print('');
+
+        if (args.length === 0) {
+            this.print(`<span class="output-info">Local:</span> ${now.toLocaleString()}`);
+        } else {
+            // Show multiple timezones
+            const timezones = {
+                'utc': 'UTC',
+                'pst': 'America/Los_Angeles',
+                'est': 'America/New_York',
+                'gmt': 'Europe/London',
+                'jst': 'Asia/Tokyo',
+                'cet': 'Europe/Paris'
+            };
+
+            this.print('<span class="output-highlight">World Clock</span>');
+            this.print('');
+
+            for (const [key, tz] of Object.entries(timezones)) {
+                try {
+                    const time = now.toLocaleString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true });
+                    this.print(`  <span class="output-info">${key.toUpperCase().padEnd(4)}</span> ${time}`);
+                } catch (e) {
+                    // Skip invalid timezone
+                }
+            }
+        }
+        this.print('');
+        this.print('<span class="output-dim">Tip: use "time all" for world clock</span>');
+        this.print('');
+    },
+
+    showVisitors() {
+        // Fun fake visitor counter using localStorage
+        let count = parseInt(localStorage.getItem('visitor_count') || '0');
+        if (count === 0) {
+            count = Math.floor(Math.random() * 900) + 100; // Start with random 100-999
+        }
+        count++;
+        localStorage.setItem('visitor_count', count.toString());
+
+        this.print('');
+        this.print('<span class="output-highlight">═══ Visitor Stats ═══</span>');
+        this.print('');
+        this.print(`<span class="output-info">You are visitor #</span><span class="output-success">${count}</span>`);
+        this.print(`<span class="output-dim">(not really, this is just localStorage)</span>`);
         this.print('');
     },
 
