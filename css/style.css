@@ -130,6 +130,41 @@ body {
     color: var(--soul-cyan);
 }
 
+/* Syntax highlighting */
+.hl-number {
+    color: var(--radiance-orange);
+}
+
+.hl-string {
+    color: #98c379; /* Green for strings */
+}
+
+.hl-keyword {
+    color: var(--lifeblood-blue);
+    font-weight: bold;
+}
+
+.hl-bracket {
+    color: var(--soul-cyan);
+}
+
+.hl-path {
+    color: #61afef; /* Light blue for paths */
+}
+
+.hl-url {
+    color: var(--lifeblood-blue);
+    text-decoration: underline;
+}
+
+.hl-email {
+    color: var(--soul-cyan);
+}
+
+.hl-date {
+    color: var(--radiance-orange);
+}
+
 /* Input line */
 .input-line {
     display: flex;

@@ -232,6 +232,20 @@ const terminal = {
         return div.innerHTML;
     },
 
+    // Syntax highlight text
+    highlight(text) {
+        // Escape first
+        let result = this.escapeHtml(text);
+
+        // Highlight numbers
+        result = result.replace(/\b(\d+)\b/g, '<span class="hl-number">$1</span>');
+
+        // Highlight paths (starts with / or ~)
+        result = result.replace(/(\/[\w\-\.\/]+|~\/[\w\-\.\/]+)/g, '<span class="hl-path">$1</span>');
+
+        return result;
+    },
+
     // GitHub-style language colors
     getLangColor(lang) {
         const colors = {
