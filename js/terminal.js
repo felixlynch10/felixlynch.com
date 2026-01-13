@@ -347,7 +347,7 @@ const terminal = {
         this.print('<span class="output-highlight">═══ Contact ═══</span>');
         this.print('');
         this.print('<span class="output-info">GitHub:</span>   <a href="https://github.com/felixlynch10" target="_blank">github.com/felixlynch10</a>');
-        this.print('<span class="output-info">Email:</span>    <a href="mailto:felix@felixlynch.com">felix@felixlynch.com</a>');
+        this.print('<span class="output-info">Email:</span>    <a href="mailto:felixlynch10@gmail.com">felixlynch10@gmail.com</a>');
         this.print('<span class="output-info">Website:</span>  <a href="https://felixlynch.com">felixlynch.com</a>');
         this.print('');
     },
