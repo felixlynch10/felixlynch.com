@@ -13,9 +13,9 @@ let reposCache = null;
 // Featured projects (shown first)
 const FEATURED_REPOS = ['focus', 'felixlynch.com'];
 
-// Collaborated projects (owner/repo format)
-const COLLAB_REPOS = [
-    // Add collaborated repos here, e.g.: 'owner/repo-name'
+// Manually pinned collab projects (owner/repo format)
+const PINNED_COLLAB_REPOS = [
+    // Add any repos here that don't show up automatically
 ];
 
 // Load cache from localStorage on init
@@ -67,10 +67,33 @@ async function fetchRepos() {
         }
 
         let repos = await response.json();
+        const ownRepoNames = new Set(repos.map(r => r.full_name.toLowerCase()));
+
+        // Auto-discover collaborated repos from recent activity
+        const collabRepoNames = new Set(PINNED_COLLAB_REPOS.map(r => r.toLowerCase()));
+
+        try {
+            // Fetch recent events to find contributions to other repos
+            const eventsResp = await fetch(`${GITHUB_API}/users/${GITHUB_USERNAME}/events?per_page=100`);
+            if (eventsResp.ok) {
+                const events = await eventsResp.json();
+                for (const event of events) {
+                    // Look for push events, PRs, and issues on repos we don't own
+                    if (['PushEvent', 'PullRequestEvent', 'IssuesEvent', 'CreateEvent'].includes(event.type)) {
+                        const repoName = event.repo?.name?.toLowerCase();
+                        if (repoName && !ownRepoNames.has(repoName)) {
+                            collabRepoNames.add(event.repo.name); // Keep original case
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Failed to fetch events for collab discovery');
+        }
 
         // Fetch collaborated repos
-        if (COLLAB_REPOS.length > 0) {
-            const collabPromises = COLLAB_REPOS.map(async (fullName) => {
+        if (collabRepoNames.size > 0) {
+            const collabPromises = [...collabRepoNames].map(async (fullName) => {
                 try {
                     const resp = await fetch(`${GITHUB_API}/repos/${fullName}`);
                     if (resp.ok) {
