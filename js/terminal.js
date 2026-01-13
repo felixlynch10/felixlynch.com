@@ -114,6 +114,9 @@ const terminal = {
             case 'cat':
                 await this.showProject(args[0]);
                 break;
+            case 'readme':
+                await this.showReadme(args[0]);
+                break;
             case 'about':
                 this.showAbout();
                 break;
@@ -339,7 +342,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cd', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'sound', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
+        const commands = ['help', 'ls', 'cd', 'cat', 'readme', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'sound', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -351,7 +354,7 @@ const terminal = {
         }
 
         // If typing argument for project-related commands
-        const projectCommands = ['cat', 'open', 'clone', 'cd'];
+        const projectCommands = ['cat', 'open', 'clone', 'cd', 'readme'];
         const cmd = parts[0].toLowerCase();
 
         if (projectCommands.includes(cmd)) {
@@ -419,6 +422,7 @@ const terminal = {
         this.print('');
         this.print('  <span class="output-success">ls</span>           List all projects');
         this.print('  <span class="output-success">cat</span> <name>   Show project details');
+        this.print('  <span class="output-success">readme</span> <name> Show project README');
         this.print('  <span class="output-success">grep</span> <term>  Search projects');
         this.print('  <span class="output-success">open</span> <name>  Open project on GitHub');
         this.print('  <span class="output-success">clone</span> <name> Get git clone command');
@@ -708,6 +712,88 @@ const terminal = {
             this.print(`<span class="output-info">Website:</span>     <a href="${r.homepage}" target="_blank">${r.homepage}</a>`);
         }
         this.print('');
+    },
+
+    async showReadme(name) {
+        // Use current project if in a project directory
+        const projectName = name || this.currentProject;
+
+        if (!projectName) {
+            this.print('<span class="output-error">Usage: readme <project-name></span>');
+            this.print('<span class="output-dim">Or cd into a project first</span>');
+            return;
+        }
+
+        this.print('');
+
+        // Show loading
+        const loadingLine = document.createElement('div');
+        loadingLine.className = 'output-line';
+        loadingLine.innerHTML = '<span class="output-dim">Fetching README </span><span class="spinner">⠋</span>';
+        this.output.appendChild(loadingLine);
+
+        const spinner = loadingLine.querySelector('.spinner');
+        const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        let frameIdx = 0;
+        const spinnerInterval = setInterval(() => {
+            frameIdx = (frameIdx + 1) % frames.length;
+            spinner.textContent = frames[frameIdx];
+        }, 80);
+
+        try {
+            // Fetch README from GitHub API
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${projectName}/readme`, {
+                headers: { 'Accept': 'application/vnd.github.raw' }
+            });
+
+            clearInterval(spinnerInterval);
+            loadingLine.remove();
+
+            if (!response.ok) {
+                this.print(`<span class="output-error">No README found for ${this.escapeHtml(projectName)}</span>`);
+                return;
+            }
+
+            const readme = await response.text();
+
+            this.print(`<span class="output-highlight">═══ README: ${projectName} ═══</span>`);
+            this.print('');
+
+            // Basic markdown rendering
+            const lines = readme.split('\n');
+            for (const line of lines) {
+                let rendered = this.escapeHtml(line);
+
+                // Headers
+                if (line.startsWith('### ')) {
+                    rendered = `<span class="output-info">${this.escapeHtml(line.slice(4))}</span>`;
+                } else if (line.startsWith('## ')) {
+                    rendered = `<span class="output-highlight">${this.escapeHtml(line.slice(3))}</span>`;
+                } else if (line.startsWith('# ')) {
+                    rendered = `<span class="output-highlight" style="font-size:1.1em">${this.escapeHtml(line.slice(2))}</span>`;
+                }
+                // Code blocks
+                else if (line.startsWith('```')) {
+                    rendered = '<span class="output-dim">───</span>';
+                }
+                // Bullet points
+                else if (line.match(/^[\s]*[-*]\s/)) {
+                    rendered = rendered.replace(/^(\s*)([-*])/, '$1<span class="output-success">•</span>');
+                }
+                // Bold
+                rendered = rendered.replace(/\*\*([^*]+)\*\*/g, '<span class="output-success">$1</span>');
+                // Inline code
+                rendered = rendered.replace(/`([^`]+)`/g, '<span class="output-warning">$1</span>');
+
+                this.print(rendered);
+            }
+
+            this.print('');
+        } catch (e) {
+            clearInterval(spinnerInterval);
+            loadingLine.remove();
+            this.print(`<span class="output-error">Failed to fetch README: ${e.message}</span>`);
+        }
     },
 
     showAbout() {
