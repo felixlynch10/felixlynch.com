@@ -5,10 +5,17 @@ const terminal = {
     history: [],
     historyIndex: -1,
     isTyping: false,
+    startTime: Date.now(),
+    konamiCode: [],
+    konamiSequence: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'],
 
     init() {
         this.output = document.getElementById('output');
         this.input = document.getElementById('command-input');
+        this.startTime = Date.now();
+
+        // Konami code listener
+        document.addEventListener('keydown', (e) => this.checkKonami(e));
 
         // Handle input
         this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
@@ -118,6 +125,9 @@ const terminal = {
                 break;
             case 'latest':
                 await this.showLatest();
+                break;
+            case 'uptime':
+                this.showUptime();
                 break;
             case 'neofetch':
             case 'fastfetch':
@@ -235,7 +245,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -762,9 +772,74 @@ const terminal = {
             "A user interface is like a joke. If you have to explain it, it's not that good."
         ];
         const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+
+        // Calculate padding for speech bubble
+        const padding = Math.max(0, 40 - fortune.length);
+        const topLine = ' ' + '_'.repeat(Math.min(fortune.length + 2, 42));
+        const bottomLine = ' ' + '-'.repeat(Math.min(fortune.length + 2, 42));
+
         this.print('');
-        this.print(`<span class="output-success">🔮 ${fortune}</span>`);
+        this.print(`<span class="ascii-art">${topLine}</span>`);
+        this.print(`<span class="ascii-art">< ${fortune} ></span>`);
+        this.print(`<span class="ascii-art">${bottomLine}</span>`);
+        this.print('<span class="ascii-art">        \\   ^__^</span>');
+        this.print('<span class="ascii-art">         \\  (oo)\\_______</span>');
+        this.print('<span class="ascii-art">            (__)\\       )\\/\\</span>');
+        this.print('<span class="ascii-art">                ||----w |</span>');
+        this.print('<span class="ascii-art">                ||     ||</span>');
         this.print('');
+    },
+
+    showUptime() {
+        const now = Date.now();
+        const diff = now - this.startTime;
+
+        const seconds = Math.floor(diff / 1000) % 60;
+        const minutes = Math.floor(diff / (1000 * 60)) % 60;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+
+        let uptime = '';
+        if (hours > 0) uptime += `${hours}h `;
+        if (minutes > 0 || hours > 0) uptime += `${minutes}m `;
+        uptime += `${seconds}s`;
+
+        this.print('');
+        this.print(`<span class="output-info">Session uptime:</span> <span class="output-success">${uptime}</span>`);
+        this.print(`<span class="output-dim">Started: ${new Date(this.startTime).toLocaleTimeString()}</span>`);
+        this.print('');
+    },
+
+    checkKonami(e) {
+        // Don't track if input is focused
+        if (document.activeElement === this.input) return;
+
+        this.konamiCode.push(e.key);
+
+        // Keep only last 10 keys
+        if (this.konamiCode.length > 10) {
+            this.konamiCode.shift();
+        }
+
+        // Check if matches
+        if (this.konamiCode.length === 10 &&
+            this.konamiCode.every((key, i) => key === this.konamiSequence[i])) {
+            this.triggerKonami();
+            this.konamiCode = [];
+        }
+    },
+
+    triggerKonami() {
+        this.print('');
+        this.print('<span class="output-warning">🎮 KONAMI CODE ACTIVATED! 🎮</span>');
+        this.print('');
+        this.print('<span class="ascii-art hornet">');
+        this.print('  ⬆️ ⬆️ ⬇️ ⬇️ ⬅️ ➡️ ⬅️ ➡️ 🅱️ 🅰️');
+        this.print('</span>');
+        this.print('');
+        this.print('<span class="output-success">+30 lives! (not really, this is a website)</span>');
+        this.print('<span class="output-info">You found a secret! 🎉</span>');
+        this.print('');
+        this.scrollToBottom();
     },
 
     showMatrix() {
