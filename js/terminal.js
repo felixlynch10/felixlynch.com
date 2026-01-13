@@ -229,50 +229,106 @@ const terminal = {
         this.scrollToBottom();
     },
 
-    print(html) {
-        const line = document.createElement('div');
-        line.className = 'output-line';
-        line.innerHTML = html;
-        this.output.appendChild(line);
+    // Queue for sequential animations
+    printQueue: [],
+    isPrinting: false,
+
+    print(html, instant = false) {
+        if (instant || this.isTyping) {
+            // Instant print (no animation)
+            const line = document.createElement('div');
+            line.className = 'output-line';
+            line.innerHTML = html;
+            this.output.appendChild(line);
+        } else {
+            // Queue for split-flap animation
+            this.printQueue.push(html);
+            this.processQueue();
+        }
+    },
+
+    async processQueue() {
+        if (this.isPrinting || this.printQueue.length === 0) return;
+
+        this.isPrinting = true;
+
+        while (this.printQueue.length > 0) {
+            const html = this.printQueue.shift();
+            await this.printFlap(html);
+        }
+
+        this.isPrinting = false;
+        this.scrollToBottom();
     },
 
     // Split-flap display animation (like old train boards)
-    async printFlap(text) {
+    async printFlap(html) {
         const line = document.createElement('div');
-        line.className = 'output-line split-flap';
+        line.className = 'output-line';
         this.output.appendChild(line);
 
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:/';
-        const finalChars = text.split('');
-        const currentChars = finalChars.map(() => ' ');
+        // If it's HTML with tags, extract text for animation then apply HTML
+        const hasHtml = html.includes('<');
 
-        // Flip each character with stagger
-        for (let i = 0; i < finalChars.length; i++) {
-            const target = finalChars[i];
-            if (target === ' ') {
-                currentChars[i] = ' ';
-                line.textContent = currentChars.join('');
-                continue;
-            }
+        if (hasHtml) {
+            // Create temp element to get text content
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const text = temp.textContent || '';
 
-            // Do 3-5 random flips before settling
-            const flips = 3 + Math.floor(Math.random() * 3);
-            for (let f = 0; f < flips; f++) {
-                currentChars[i] = chars[Math.floor(Math.random() * chars.length)];
-                line.textContent = currentChars.join('');
-                await new Promise(r => setTimeout(r, 25));
-            }
+            // Animate the text
+            await this.animateText(line, text);
 
-            // Settle on final character
-            currentChars[i] = target;
-            line.textContent = currentChars.join('');
-            sound.typeClick();
-
-            // Small delay before next char starts
-            await new Promise(r => setTimeout(r, 10));
+            // Then apply the actual HTML styling
+            line.innerHTML = html;
+        } else {
+            // Plain text - animate directly
+            await this.animateText(line, html);
         }
 
         this.scrollToBottom();
+    },
+
+    async animateText(element, text) {
+        if (!text || text.trim() === '') {
+            element.textContent = text;
+            return;
+        }
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:/!?';
+        const finalChars = text.split('');
+        const currentChars = finalChars.map(() => ' ');
+
+        // Faster animation - all chars flip simultaneously with stagger start
+        const flipPromises = finalChars.map((target, i) => {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    if (target === ' ' || target === '\n') {
+                        currentChars[i] = target;
+                        element.textContent = currentChars.join('');
+                        resolve();
+                        return;
+                    }
+
+                    let flips = 2 + Math.floor(Math.random() * 2); // 2-3 flips
+                    const flipInterval = setInterval(() => {
+                        if (flips > 0) {
+                            currentChars[i] = chars[Math.floor(Math.random() * chars.length)];
+                            element.textContent = currentChars.join('');
+                            flips--;
+                        } else {
+                            clearInterval(flipInterval);
+                            currentChars[i] = target;
+                            element.textContent = currentChars.join('');
+                            resolve();
+                        }
+                    }, 20);
+                }, i * 8); // 8ms stagger between chars
+            });
+        });
+
+        await Promise.all(flipPromises);
+        sound.typeClick();
     },
 
     // Escape HTML to prevent XSS
@@ -418,20 +474,17 @@ const terminal = {
     },
 
     async showWelcome() {
-        // Knight image with title
-        this.print('<div class="welcome-container">');
-        this.print('<img src="assets/knight.png" alt="The Knight" class="welcome-image">');
-        this.print('<div class="welcome-text">');
-        this.print('<span class="output-highlight welcome-title">FELIX LYNCH</span>');
-        this.print('<span class="output-dim">Developer</span>');
-        this.print('</div>');
-        this.print('</div>');
-        this.print('');
+        // Knight image with title (instant, no animation for images)
+        this.print('<div class="welcome-container"><img src="assets/knight.png" alt="The Knight" class="welcome-image"><div class="welcome-text"><span class="output-highlight welcome-title">FELIX LYNCH</span><span class="output-dim">Developer</span></div></div>', true);
+        this.print('', true);
 
-        // Split-flap welcome message
-        await this.printFlap('Welcome to my portfolio!');
+        // Wait for queue then show welcome
+        await new Promise(r => setTimeout(r, 100));
+
+        // These will animate
+        this.print('Welcome to my portfolio!');
         this.print('');
-        await this.printFlap('Type "help" for available commands.');
+        this.print('Type "help" for available commands.');
         this.print('');
     },
 
