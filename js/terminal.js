@@ -98,6 +98,12 @@ const terminal = {
             case 'grep':
                 await this.grepProjects(args[0]);
                 break;
+            case 'open':
+                await this.openProject(args[0]);
+                break;
+            case 'clone':
+                await this.cloneProject(args[0]);
+                break;
             case 'neofetch':
             case 'fastfetch':
                 this.showNeofetch();
@@ -213,7 +219,7 @@ const terminal = {
 
     autocomplete() {
         const cmd = this.input.value.toLowerCase();
-        const commands = ['help', 'ls', 'cat', 'grep', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
         const match = commands.find(c => c.startsWith(cmd));
         if (match) {
             this.input.value = match;
@@ -265,6 +271,8 @@ const terminal = {
         this.print('  <span class="output-success">ls</span>           List all projects');
         this.print('  <span class="output-success">cat</span> <name>   Show project details');
         this.print('  <span class="output-success">grep</span> <term>  Search projects');
+        this.print('  <span class="output-success">open</span> <name>  Open project on GitHub');
+        this.print('  <span class="output-success">clone</span> <name> Get git clone command');
         this.print('  <span class="output-success">about</span>        About me');
         this.print('  <span class="output-success">skills</span>       Languages & tools');
         this.print('  <span class="output-success">contact</span>      Contact information');
@@ -305,6 +313,73 @@ const terminal = {
 
         this.print('<span class="output-info">Use</span> cat <name> <span class="output-info">for details</span>');
         this.print('');
+    },
+
+    async openProject(name) {
+        if (!name) {
+            this.print('<span class="output-error">Usage: open <project-name></span>');
+            return;
+        }
+
+        const repos = await fetchRepos();
+        if (!repos) {
+            this.print('<span class="output-error">Failed to fetch project data.</span>');
+            return;
+        }
+
+        const repo = repos.find(r => r.name.toLowerCase() === name.toLowerCase());
+        if (!repo) {
+            this.print(`<span class="output-error">Project not found: ${this.escapeHtml(name)}</span>`);
+            return;
+        }
+
+        this.print(`<span class="output-success">Opening ${repo.name} on GitHub...</span>`);
+        window.open(repo.html_url, '_blank');
+    },
+
+    async cloneProject(name) {
+        if (!name) {
+            this.print('<span class="output-error">Usage: clone <project-name></span>');
+            return;
+        }
+
+        const repos = await fetchRepos();
+        if (!repos) {
+            this.print('<span class="output-error">Failed to fetch project data.</span>');
+            return;
+        }
+
+        const repo = repos.find(r => r.name.toLowerCase() === name.toLowerCase());
+        if (!repo) {
+            this.print(`<span class="output-error">Project not found: ${this.escapeHtml(name)}</span>`);
+            return;
+        }
+
+        const cloneUrl = repo.clone_url;
+        const sshUrl = `git@github.com:${GITHUB_USERNAME}/${repo.name}.git`;
+
+        this.print('');
+        this.print(`<span class="output-highlight">═══ Clone ${repo.name} ═══</span>`);
+        this.print('');
+        this.print('<span class="output-info">HTTPS:</span>');
+        this.print(`  <span class="output-success clickable" data-copy="${cloneUrl}">git clone ${cloneUrl}</span>`);
+        this.print('');
+        this.print('<span class="output-info">SSH:</span>');
+        this.print(`  <span class="output-success clickable" data-copy="git clone ${sshUrl}">git clone ${sshUrl}</span>`);
+        this.print('');
+        this.print('<span class="output-dim">Click to copy</span>');
+        this.print('');
+
+        // Add click handlers for copy
+        setTimeout(() => {
+            document.querySelectorAll('.clickable[data-copy]').forEach(el => {
+                el.style.cursor = 'pointer';
+                el.onclick = () => {
+                    navigator.clipboard.writeText(el.dataset.copy);
+                    el.innerHTML += ' <span class="output-warning">✓ copied!</span>';
+                };
+            });
+        }, 0);
     },
 
     async grepProjects(term) {
