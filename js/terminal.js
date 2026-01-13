@@ -8,6 +8,7 @@ const terminal = {
     startTime: Date.now(),
     konamiCode: [],
     konamiSequence: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'],
+    currentProject: null, // For cd navigation
 
     init() {
         this.output = document.getElementById('output');
@@ -87,7 +88,14 @@ const terminal = {
                 this.showHelp();
                 break;
             case 'ls':
-                await this.listProjects();
+                if (this.currentProject) {
+                    await this.listProjectFiles();
+                } else {
+                    await this.listProjects();
+                }
+                break;
+            case 'cd':
+                await this.changeDirectory(args[0]);
                 break;
             case 'cat':
                 await this.showProject(args[0]);
@@ -112,7 +120,11 @@ const terminal = {
                 }
                 break;
             case 'pwd':
-                this.print('/home/visitor/felixlynch.com');
+                if (this.currentProject) {
+                    this.print(`/home/visitor/projects/${this.currentProject}`);
+                } else {
+                    this.print('/home/visitor/felixlynch.com');
+                }
                 break;
             case 'date':
                 this.print(new Date().toString());
@@ -295,7 +307,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
+        const commands = ['help', 'ls', 'cd', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -307,7 +319,7 @@ const terminal = {
         }
 
         // If typing argument for project-related commands
-        const projectCommands = ['cat', 'open', 'clone'];
+        const projectCommands = ['cat', 'open', 'clone', 'cd'];
         const cmd = parts[0].toLowerCase();
 
         if (projectCommands.includes(cmd)) {
@@ -435,7 +447,81 @@ const terminal = {
             this.print('');
         }
 
-        this.print('<span class="output-info">Use</span> cat <name> <span class="output-info">for details</span>');
+        this.print('<span class="output-info">Use</span> cat <name> <span class="output-info">for details, or</span> cd <name> <span class="output-info">to explore files</span>');
+        this.print('');
+    },
+
+    async changeDirectory(target) {
+        // Go back to root
+        if (!target || target === '~' || target === '/' || target === '..') {
+            if (this.currentProject) {
+                this.print(`<span class="output-dim">Left ${this.currentProject}/</span>`);
+                this.currentProject = null;
+                this.updatePrompt();
+            }
+            return;
+        }
+
+        // Check if target is a valid project
+        const repos = await fetchRepos();
+        if (!repos) {
+            this.print('<span class="output-error">Failed to fetch project data.</span>');
+            return;
+        }
+
+        const repo = repos.find(r => r.name.toLowerCase() === target.toLowerCase());
+        if (!repo) {
+            this.print(`<span class="output-error">cd: no such directory: ${this.escapeHtml(target)}</span>`);
+            return;
+        }
+
+        this.currentProject = repo.name;
+        this.updatePrompt();
+        this.print(`<span class="output-dim">Entered ${repo.name}/</span>`);
+        this.print('<span class="output-info">Use</span> ls <span class="output-info">to view files,</span> cd .. <span class="output-info">to go back</span>');
+    },
+
+    updatePrompt() {
+        const prompt = document.querySelector('.prompt');
+        if (this.currentProject) {
+            prompt.textContent = `visitor@felixlynch.com:~/${this.currentProject}$`;
+        } else {
+            prompt.textContent = 'visitor@felixlynch.com:~$';
+        }
+    },
+
+    async listProjectFiles() {
+        this.print('');
+        this.print(`<span class="output-highlight">Files in ${this.currentProject}/</span>`);
+        this.print('');
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${this.currentProject}/contents`);
+            if (!response.ok) throw new Error('Failed to fetch');
+
+            const contents = await response.json();
+
+            // Sort: directories first, then files
+            contents.sort((a, b) => {
+                if (a.type === 'dir' && b.type !== 'dir') return -1;
+                if (a.type !== 'dir' && b.type === 'dir') return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            for (const item of contents) {
+                if (item.type === 'dir') {
+                    this.print(`  <span class="output-info">📁 ${item.name}/</span>`);
+                } else {
+                    const size = item.size < 1024 ? `${item.size}B` : `${Math.round(item.size/1024)}KB`;
+                    this.print(`  <span class="output-success">📄 ${item.name}</span> <span class="output-dim">(${size})</span>`);
+                }
+            }
+
+            this.print('');
+            this.print('<span class="output-dim">Use</span> cd .. <span class="output-dim">to go back</span>');
+        } catch (e) {
+            this.print('<span class="output-error">Failed to fetch repository contents.</span>');
+        }
         this.print('');
     },
 
