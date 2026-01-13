@@ -74,6 +74,9 @@ const terminal = {
             case 'about':
                 this.showAbout();
                 break;
+            case 'skills':
+                this.showSkills();
+                break;
             case 'contact':
                 this.showContact();
                 break;
@@ -207,7 +210,7 @@ const terminal = {
 
     autocomplete() {
         const cmd = this.input.value.toLowerCase();
-        const commands = ['help', 'ls', 'cat', 'about', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
+        const commands = ['help', 'ls', 'cat', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
         const match = commands.find(c => c.startsWith(cmd));
         if (match) {
             this.input.value = match;
@@ -259,6 +262,7 @@ const terminal = {
         this.print('  <span class="output-success">ls</span>           List all projects');
         this.print('  <span class="output-success">cat</span> <name>   Show project details');
         this.print('  <span class="output-success">about</span>        About me');
+        this.print('  <span class="output-success">skills</span>       Languages & tools');
         this.print('  <span class="output-success">contact</span>      Contact information');
         this.print('  <span class="output-success">neofetch</span>     System info');
         this.print('  <span class="output-success">fortune</span>      Random dev wisdom');
@@ -360,6 +364,38 @@ const terminal = {
         this.print('<span class="output-info">GitHub:</span>   <a href="https://github.com/felixlynch10" target="_blank">github.com/felixlynch10</a>');
         this.print('<span class="output-info">Email:</span>    <a href="mailto:felixlynch10@gmail.com">felixlynch10@gmail.com</a>');
         this.print('<span class="output-info">Website:</span>  <a href="https://felixlynch.com">felixlynch.com</a>');
+        this.print('');
+    },
+
+    showSkills() {
+        const skillBar = (level) => {
+            const filled = '█'.repeat(level);
+            const empty = '░'.repeat(5 - level);
+            return `<span class="output-success">${filled}</span><span class="output-dim">${empty}</span>`;
+        };
+
+        this.print('');
+        this.print('<span class="output-highlight">═══ Skills ═══</span>');
+        this.print('');
+        this.print('<span class="output-info">Languages</span>');
+        this.print(`  Rust          ${skillBar(4)} Systems programming, CLI tools`);
+        this.print(`  JavaScript    ${skillBar(4)} Web dev, Node.js`);
+        this.print(`  Python        ${skillBar(3)} Scripting, automation`);
+        this.print(`  HTML/CSS      ${skillBar(4)} Responsive design`);
+        this.print(`  Bash          ${skillBar(3)} Shell scripting`);
+        this.print(`  Lua           ${skillBar(2)} Neovim config`);
+        this.print('');
+        this.print('<span class="output-info">Tools & Technologies</span>');
+        this.print(`  Git           ${skillBar(4)} Version control`);
+        this.print(`  Linux         ${skillBar(4)} Daily driver, Hyprland`);
+        this.print(`  Neovim        ${skillBar(4)} Primary editor`);
+        this.print(`  Docker        ${skillBar(2)} Containers`);
+        this.print('');
+        this.print('<span class="output-info">Interests</span>');
+        this.print('  · Terminal UIs & CLI tools');
+        this.print('  · Systems programming');
+        this.print('  · Linux ricing');
+        this.print('  · Productivity automation');
         this.print('');
     },
 

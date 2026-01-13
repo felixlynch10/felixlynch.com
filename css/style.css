@@ -121,6 +121,11 @@ body {
     font-weight: bold;
 }
 
+.output-dim {
+    color: var(--pale-dim);
+    opacity: 0.5;
+}
+
 /* Input line */
 .input-line {
     display: flex;
