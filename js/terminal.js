@@ -22,7 +22,7 @@ const terminal = {
         this.showWelcome();
     },
 
-    handleKeydown(e) {
+    async handleKeydown(e) {
         if (e.key === 'Enter') {
             const cmd = this.input.value.trim();
             if (cmd) {
@@ -48,7 +48,7 @@ const terminal = {
             }
         } else if (e.key === 'Tab') {
             e.preventDefault();
-            this.autocomplete();
+            await this.autocomplete();
         } else if (e.key === 'l' && e.ctrlKey) {
             e.preventDefault();
             this.clear();
@@ -223,12 +223,42 @@ const terminal = {
         this.scrollToBottom();
     },
 
-    autocomplete() {
-        const cmd = this.input.value.toLowerCase();
-        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'about', 'skills', 'social', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
-        const match = commands.find(c => c.startsWith(cmd));
-        if (match) {
-            this.input.value = match;
+    async autocomplete() {
+        const input = this.input.value;
+        const parts = input.split(/\s+/);
+        const commands = ['help', 'ls', 'cat', 'grep', 'open', 'clone', 'stats', 'about', 'skills', 'social', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'history', 'man'];
+
+        // If just typing a command (no space yet)
+        if (parts.length === 1) {
+            const match = commands.find(c => c.startsWith(input.toLowerCase()));
+            if (match) {
+                this.input.value = match;
+            }
+            return;
+        }
+
+        // If typing argument for project-related commands
+        const projectCommands = ['cat', 'open', 'clone'];
+        const cmd = parts[0].toLowerCase();
+
+        if (projectCommands.includes(cmd)) {
+            const partial = parts[1]?.toLowerCase() || '';
+            const repos = await fetchRepos();
+
+            if (repos) {
+                const matches = repos
+                    .map(r => r.name)
+                    .filter(name => name.toLowerCase().startsWith(partial));
+
+                if (matches.length === 1) {
+                    // Single match - complete it
+                    this.input.value = `${cmd} ${matches[0]}`;
+                } else if (matches.length > 1 && partial) {
+                    // Multiple matches - show them
+                    this.print(`<span class="output-command">$ ${input}</span>`);
+                    this.print(`<span class="output-dim">${matches.join('  ')}</span>`);
+                }
+            }
         }
     },
 
