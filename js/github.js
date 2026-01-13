@@ -15,7 +15,7 @@ const FEATURED_REPOS = ['focus', 'felixlynch.com'];
 
 // Manually pinned collab projects (owner/repo format)
 const PINNED_COLLAB_REPOS = [
-    // Add any repos here that don't show up automatically
+    'BrownHujay/debate-stuff'
 ];
 
 // Load cache from localStorage on init
@@ -155,10 +155,16 @@ async function fetchRepo(name) {
     }
 }
 
+// Custom descriptions for repos without good GitHub descriptions
+const CUSTOM_DESCRIPTIONS = {
+    'debate-stuff': 'Tools and resources for competitive debate prep and research',
+    'focus': 'Terminal productivity app with tasks, timers, Pomodoro, and calendar sync'
+};
+
 function formatRepo(repo) {
     const lang = repo.language || 'Unknown';
     const stars = repo.stargazers_count;
-    const desc = repo.description || 'No description';
+    const desc = CUSTOM_DESCRIPTIONS[repo.name] || repo.description || 'No description';
 
     return {
         name: repo.name,
