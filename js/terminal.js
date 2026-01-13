@@ -472,10 +472,11 @@ const terminal = {
         for (const repo of repos) {
             const r = formatRepo(repo);
             const featured = FEATURED_REPOS.includes(r.name) ? ' <span class="output-warning">★ featured</span>' : '';
+            const collab = r.isCollab ? ' <span class="output-info">◆ collab</span>' : '';
             const stars = r.stars > 0 ? ` ⭐${r.stars}` : '';
             const langColor = this.getLangColor(r.language);
 
-            this.print(`  <span class="output-success">${r.name}</span>${featured}${stars}`);
+            this.print(`  <span class="output-success">${r.name}</span>${featured}${collab}${stars}`);
             this.print(`  <span style="color:${langColor}">●</span> <span class="output-info">${r.language}</span> · ${r.description.substring(0, 60)}${r.description.length > 60 ? '...' : ''}`);
             this.print('');
         }

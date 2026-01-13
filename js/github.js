@@ -13,6 +13,11 @@ let reposCache = null;
 // Featured projects (shown first)
 const FEATURED_REPOS = ['focus', 'felixlynch.com'];
 
+// Collaborated projects (owner/repo format)
+const COLLAB_REPOS = [
+    // Add collaborated repos here, e.g.: 'owner/repo-name'
+];
+
 // Load cache from localStorage on init
 function loadCacheFromStorage() {
     try {
@@ -54,17 +59,38 @@ async function fetchRepos() {
     }
 
     try {
+        // Fetch own repos
         const response = await fetch(`${GITHUB_API}/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`);
 
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status}`);
         }
 
-        const repos = await response.json();
+        let repos = await response.json();
 
-        // Filter out forks, sort by stars then by update date
+        // Fetch collaborated repos
+        if (COLLAB_REPOS.length > 0) {
+            const collabPromises = COLLAB_REPOS.map(async (fullName) => {
+                try {
+                    const resp = await fetch(`${GITHUB_API}/repos/${fullName}`);
+                    if (resp.ok) {
+                        const repo = await resp.json();
+                        repo.isCollab = true; // Mark as collaboration
+                        return repo;
+                    }
+                } catch (e) {
+                    console.log(`Failed to fetch collab repo ${fullName}`);
+                }
+                return null;
+            });
+
+            const collabRepos = (await Promise.all(collabPromises)).filter(r => r !== null);
+            repos = [...repos, ...collabRepos];
+        }
+
+        // Filter out forks (unless collab), sort by stars then by update date
         reposCache = repos
-            .filter(repo => !repo.fork)
+            .filter(repo => !repo.fork || repo.isCollab)
             .sort((a, b) => {
                 // Featured repos first
                 const aFeatured = FEATURED_REPOS.includes(a.name);
@@ -118,6 +144,8 @@ function formatRepo(repo) {
         stars: stars,
         url: repo.html_url,
         homepage: repo.homepage,
-        updated: new Date(repo.updated_at).toLocaleDateString()
+        updated: new Date(repo.updated_at).toLocaleDateString(),
+        isCollab: repo.isCollab || false,
+        owner: repo.owner?.login || GITHUB_USERNAME
     };
 }
