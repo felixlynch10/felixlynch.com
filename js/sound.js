@@ -45,6 +45,62 @@ const sound = {
         osc.stop(ctx.currentTime + 0.03);
     },
 
+    // Split-flap mechanical flip sound
+    flip() {
+        if (!this.enabled) return;
+
+        const ctx = this.getContext();
+        const now = ctx.currentTime;
+
+        // Create noise buffer for the mechanical "clack"
+        const bufferSize = ctx.sampleRate * 0.04; // 40ms
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        // Generate noise with quick decay
+        for (let i = 0; i < bufferSize; i++) {
+            const decay = Math.exp(-i / (bufferSize * 0.1));
+            data[i] = (Math.random() * 2 - 1) * decay;
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        // Bandpass filter for that plastic/mechanical sound
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 2000 + Math.random() * 500;
+        filter.Q.value = 2;
+
+        // Add a quick low "thunk"
+        const thunk = ctx.createOscillator();
+        thunk.frequency.value = 150 + Math.random() * 50;
+        thunk.type = 'sine';
+
+        const thunkGain = ctx.createGain();
+        thunkGain.gain.setValueAtTime(this.volume * 0.4, now);
+        thunkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+
+        // Main noise gain
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(this.volume * 0.3, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        // Connect
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+
+        thunk.connect(thunkGain);
+        thunkGain.connect(ctx.destination);
+
+        // Play
+        noise.start(now);
+        noise.stop(now + 0.04);
+        thunk.start(now);
+        thunk.stop(now + 0.02);
+    },
+
     // Enter/submit sound
     enter() {
         if (!this.enabled) return;

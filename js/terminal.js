@@ -315,6 +315,7 @@ const terminal = {
                         if (flips > 0) {
                             currentChars[i] = chars[Math.floor(Math.random() * chars.length)];
                             element.textContent = currentChars.join('');
+                            sound.flip(); // Flip sound on each character change
                             flips--;
                         } else {
                             clearInterval(flipInterval);
@@ -322,13 +323,12 @@ const terminal = {
                             element.textContent = currentChars.join('');
                             resolve();
                         }
-                    }, 20);
-                }, i * 8); // 8ms stagger between chars
+                    }, 25);
+                }, i * 10); // 10ms stagger between chars
             });
         });
 
         await Promise.all(flipPromises);
-        sound.typeClick();
     },
 
     // Escape HTML to prevent XSS
