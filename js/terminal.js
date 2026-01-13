@@ -90,7 +90,7 @@ const terminal = {
                 this.print(new Date().toString());
                 break;
             case 'echo':
-                this.print(args.join(' '));
+                this.print(this.escapeHtml(args.join(' ')));
                 break;
             case 'neofetch':
             case 'fastfetch':
@@ -128,7 +128,7 @@ const terminal = {
                 this.print('<span class="output-info">Just kidding, you can\'t leave that easily.</span>');
                 break;
             default:
-                this.print(`<span class="output-error">command not found: ${command}</span>`);
+                this.print(`<span class="output-error">command not found: ${this.escapeHtml(command)}</span>`);
                 this.print('Type <span class="output-highlight">help</span> for available commands.');
         }
 
@@ -140,6 +140,13 @@ const terminal = {
         line.className = 'output-line';
         line.innerHTML = html;
         this.output.appendChild(line);
+    },
+
+    // Escape HTML to prevent XSS
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     },
 
     clear() {
@@ -369,7 +376,7 @@ const terminal = {
 
     showFortune() {
         const fortunes = [
-            "You will mass merge conflicts in your future.",
+            "You will face many merge conflicts in your future.",
             "A bug is just an undocumented feature.",
             "The best code is no code at all.",
             "git push --force is never the answer. Except when it is.",
