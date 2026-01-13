@@ -190,7 +190,7 @@ const terminal = {
                 this.showFiglet(args.join(' '));
                 break;
             case 'sound':
-                this.toggleSound(args[0]);
+                await this.toggleSound(args[0]);
                 break;
             case 'fortune':
             case 'cowsay':
@@ -1351,12 +1351,13 @@ const terminal = {
         this.print('');
     },
 
-    toggleSound(arg) {
+    async toggleSound(arg) {
         this.print('');
 
         if (arg === 'on') {
             sound.enabled = true;
             localStorage.setItem('sound_enabled', 'true');
+            await sound.ensureFlipBuffer();
             this.print('<span class="output-success">Sound effects enabled</span>');
             sound.success();
         } else if (arg === 'off') {
@@ -1364,7 +1365,7 @@ const terminal = {
             localStorage.setItem('sound_enabled', 'false');
             this.print('<span class="output-info">Sound effects disabled</span>');
         } else {
-            const enabled = sound.toggle();
+            const enabled = await sound.toggle();
             if (enabled) {
                 this.print('<span class="output-success">Sound effects enabled</span>');
                 sound.success();

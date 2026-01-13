@@ -3,24 +3,40 @@ const sound = {
     enabled: false,
     audioCtx: null,
     flipBuffer: null,
+    flipArrayBuffer: null,
     volume: 1.0,
 
     init() {
         // Check localStorage for preference
         this.enabled = localStorage.getItem('sound_enabled') === 'true';
-        // Preload flip sound
-        this.loadFlipSound();
+        // Preload flip sound data (but don't decode yet - need user interaction first)
+        this.preloadFlipSound();
     },
 
-    async loadFlipSound() {
+    async preloadFlipSound() {
         try {
             const response = await fetch('assets/flip.mp3');
-            const arrayBuffer = await response.arrayBuffer();
-            const ctx = this.getContext();
-            this.flipBuffer = await ctx.decodeAudioData(arrayBuffer);
-            console.log('Flip sound loaded successfully');
+            this.flipArrayBuffer = await response.arrayBuffer();
+            console.log('Flip sound data preloaded');
         } catch (e) {
-            console.log('Could not load flip sound:', e);
+            console.log('Could not preload flip sound:', e);
+        }
+    },
+
+    async ensureFlipBuffer() {
+        if (this.flipBuffer) return true;
+        if (!this.flipArrayBuffer) return false;
+
+        try {
+            const ctx = this.getContext();
+            // Need to clone the ArrayBuffer since decodeAudioData detaches it
+            const bufferCopy = this.flipArrayBuffer.slice(0);
+            this.flipBuffer = await ctx.decodeAudioData(bufferCopy);
+            console.log('Flip sound decoded successfully');
+            return true;
+        } catch (e) {
+            console.log('Could not decode flip sound:', e);
+            return false;
         }
     },
 
@@ -35,12 +51,12 @@ const sound = {
         return this.audioCtx;
     },
 
-    toggle() {
+    async toggle() {
         this.enabled = !this.enabled;
         localStorage.setItem('sound_enabled', this.enabled.toString());
-        // Resume audio context on user interaction
+        // Initialize audio on first enable (user interaction)
         if (this.enabled) {
-            this.getContext();
+            await this.ensureFlipBuffer();
         }
         return this.enabled;
     },
@@ -69,11 +85,13 @@ const sound = {
     },
 
     // Split-flap mechanical flip sound (uses preloaded audio file)
-    flip() {
+    async flip() {
         if (!this.enabled) return;
+
+        // Ensure buffer is loaded (lazy load on first use after user interaction)
         if (!this.flipBuffer) {
-            console.log('Flip buffer not loaded yet');
-            return;
+            await this.ensureFlipBuffer();
+            if (!this.flipBuffer) return;
         }
 
         try {
