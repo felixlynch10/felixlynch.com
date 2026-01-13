@@ -236,6 +236,45 @@ const terminal = {
         this.output.appendChild(line);
     },
 
+    // Split-flap display animation (like old train boards)
+    async printFlap(text) {
+        const line = document.createElement('div');
+        line.className = 'output-line split-flap';
+        this.output.appendChild(line);
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:/';
+        const finalChars = text.split('');
+        const currentChars = finalChars.map(() => ' ');
+
+        // Flip each character with stagger
+        for (let i = 0; i < finalChars.length; i++) {
+            const target = finalChars[i];
+            if (target === ' ') {
+                currentChars[i] = ' ';
+                line.textContent = currentChars.join('');
+                continue;
+            }
+
+            // Do 3-5 random flips before settling
+            const flips = 3 + Math.floor(Math.random() * 3);
+            for (let f = 0; f < flips; f++) {
+                currentChars[i] = chars[Math.floor(Math.random() * chars.length)];
+                line.textContent = currentChars.join('');
+                await new Promise(r => setTimeout(r, 25));
+            }
+
+            // Settle on final character
+            currentChars[i] = target;
+            line.textContent = currentChars.join('');
+            sound.typeClick();
+
+            // Small delay before next char starts
+            await new Promise(r => setTimeout(r, 10));
+        }
+
+        this.scrollToBottom();
+    },
+
     // Escape HTML to prevent XSS
     escapeHtml(text) {
         const div = document.createElement('div');
@@ -389,10 +428,10 @@ const terminal = {
         this.print('</div>');
         this.print('');
 
-        // Welcome message types out
-        await this.typeText('Welcome to my portfolio!', 25);
+        // Split-flap welcome message
+        await this.printFlap('Welcome to my portfolio!');
         this.print('');
-        await this.typeText('Type "help" for available commands.', 25);
+        await this.printFlap('Type "help" for available commands.');
         this.print('');
     },
 

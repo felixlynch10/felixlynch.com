@@ -291,6 +291,13 @@ body {
     letter-spacing: 2px;
 }
 
+/* Split-flap display effect */
+.split-flap {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+    color: var(--soul-cyan);
+}
+
 /* Links */
 a {
     color: var(--lifeblood-blue);
