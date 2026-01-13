@@ -3,7 +3,7 @@ const sound = {
     enabled: false,
     audioCtx: null,
     flipBuffer: null,
-    volume: 0.3,
+    volume: 1.0,
 
     init() {
         // Check localStorage for preference
@@ -18,6 +18,7 @@ const sound = {
             const arrayBuffer = await response.arrayBuffer();
             const ctx = this.getContext();
             this.flipBuffer = await ctx.decodeAudioData(arrayBuffer);
+            console.log('Flip sound loaded successfully');
         } catch (e) {
             console.log('Could not load flip sound:', e);
         }
@@ -27,12 +28,20 @@ const sound = {
         if (!this.audioCtx) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+        // Resume if suspended (browser autoplay policy)
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
         return this.audioCtx;
     },
 
     toggle() {
         this.enabled = !this.enabled;
         localStorage.setItem('sound_enabled', this.enabled.toString());
+        // Resume audio context on user interaction
+        if (this.enabled) {
+            this.getContext();
+        }
         return this.enabled;
     },
 
@@ -61,21 +70,29 @@ const sound = {
 
     // Split-flap mechanical flip sound (uses preloaded audio file)
     flip() {
-        if (!this.enabled || !this.flipBuffer) return;
+        if (!this.enabled) return;
+        if (!this.flipBuffer) {
+            console.log('Flip buffer not loaded yet');
+            return;
+        }
 
-        const ctx = this.getContext();
-        const source = ctx.createBufferSource();
-        source.buffer = this.flipBuffer;
+        try {
+            const ctx = this.getContext();
+            const source = ctx.createBufferSource();
+            source.buffer = this.flipBuffer;
 
-        // Add slight pitch variation for realism
-        source.playbackRate.value = 0.9 + Math.random() * 0.2;
+            // Add slight pitch variation for realism
+            source.playbackRate.value = 0.9 + Math.random() * 0.2;
 
-        const gain = ctx.createGain();
-        gain.gain.value = this.volume;
+            const gain = ctx.createGain();
+            gain.gain.value = this.volume;
 
-        source.connect(gain);
-        gain.connect(ctx.destination);
-        source.start();
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            source.start();
+        } catch (e) {
+            console.log('Error playing flip sound:', e);
+        }
     },
 
     // Enter/submit sound
