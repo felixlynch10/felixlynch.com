@@ -1,0 +1,87 @@
+// GitHub API integration
+const GITHUB_USERNAME = 'felixlynch10';
+const GITHUB_API = 'https://api.github.com';
+
+// Cache for repos
+let reposCache = null;
+let lastFetch = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Featured projects (shown first)
+const FEATURED_REPOS = ['focus', 'felixlynch.com'];
+
+async function fetchRepos() {
+    const now = Date.now();
+
+    // Return cache if valid
+    if (reposCache && (now - lastFetch) < CACHE_DURATION) {
+        return reposCache;
+    }
+
+    try {
+        const response = await fetch(`${GITHUB_API}/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`);
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const repos = await response.json();
+
+        // Filter out forks, sort by stars then by update date
+        reposCache = repos
+            .filter(repo => !repo.fork)
+            .sort((a, b) => {
+                // Featured repos first
+                const aFeatured = FEATURED_REPOS.includes(a.name);
+                const bFeatured = FEATURED_REPOS.includes(b.name);
+                if (aFeatured && !bFeatured) return -1;
+                if (!aFeatured && bFeatured) return 1;
+
+                // Then by stars
+                if (b.stargazers_count !== a.stargazers_count) {
+                    return b.stargazers_count - a.stargazers_count;
+                }
+
+                // Then by update date
+                return new Date(b.updated_at) - new Date(a.updated_at);
+            });
+
+        lastFetch = now;
+        return reposCache;
+
+    } catch (error) {
+        console.error('Failed to fetch repos:', error);
+        return null;
+    }
+}
+
+async function fetchRepo(name) {
+    try {
+        const response = await fetch(`${GITHUB_API}/repos/${GITHUB_USERNAME}/${name}`);
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Failed to fetch repo ${name}:`, error);
+        return null;
+    }
+}
+
+function formatRepo(repo) {
+    const lang = repo.language || 'Unknown';
+    const stars = repo.stargazers_count;
+    const desc = repo.description || 'No description';
+
+    return {
+        name: repo.name,
+        description: desc,
+        language: lang,
+        stars: stars,
+        url: repo.html_url,
+        homepage: repo.homepage,
+        updated: new Date(repo.updated_at).toLocaleDateString()
+    };
+}

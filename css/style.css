@@ -1,0 +1,255 @@
+/* Hollow Knight inspired terminal theme */
+:root {
+    --void-black: #0a0a0f;
+    --void-dark: #1a1a24;
+    --soul-cyan: #a0d0d8;
+    --pale-white: #e8e8e4;
+    --pale-dim: #8a8a9a;
+    --void-purple: #2a1a3a;
+    --radiance-orange: #f08030;
+    --hornet-red: #9A2734;
+    --lifeblood-blue: #3080c0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--void-black);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Terminal window */
+.terminal {
+    width: 100%;
+    max-width: 900px;
+    min-height: 600px;
+    background: var(--void-dark);
+    border-radius: 8px;
+    border: 1px solid var(--void-purple);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(160, 208, 216, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Terminal header bar */
+.terminal-header {
+    background: linear-gradient(180deg, #2a2a3a 0%, var(--void-dark) 100%);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--void-purple);
+}
+
+.terminal-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.terminal-buttons span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.btn-close { background: var(--hornet-red); }
+.btn-minimize { background: var(--radiance-orange); }
+.btn-maximize { background: #50c050; }
+
+.terminal-title {
+    flex: 1;
+    text-align: center;
+    color: var(--pale-dim);
+    font-size: 13px;
+}
+
+/* Terminal body */
+.terminal-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#output {
+    flex: 1;
+    color: var(--pale-white);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Output styling */
+.output-line {
+    margin-bottom: 4px;
+}
+
+.output-command {
+    color: var(--pale-dim);
+}
+
+.output-success {
+    color: var(--soul-cyan);
+}
+
+.output-error {
+    color: var(--hornet-red);
+}
+
+.output-warning {
+    color: var(--radiance-orange);
+}
+
+.output-info {
+    color: var(--lifeblood-blue);
+}
+
+.output-highlight {
+    color: var(--soul-cyan);
+    font-weight: bold;
+}
+
+/* Input line */
+.input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.prompt {
+    color: var(--soul-cyan);
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+#command-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--pale-white);
+    font-family: inherit;
+    font-size: 14px;
+    caret-color: var(--soul-cyan);
+}
+
+/* Blinking cursor */
+.cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--soul-cyan);
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+/* Hide cursor when input is focused (browser shows its own) */
+#command-input:focus + .cursor {
+    display: none;
+}
+
+/* Project cards in output */
+.project-card {
+    border: 1px solid var(--void-purple);
+    border-radius: 4px;
+    padding: 12px;
+    margin: 8px 0;
+    background: rgba(42, 26, 58, 0.3);
+}
+
+.project-name {
+    color: var(--soul-cyan);
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.project-desc {
+    color: var(--pale-dim);
+    margin: 6px 0;
+    font-size: 13px;
+}
+
+.project-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--pale-dim);
+}
+
+.project-lang {
+    color: var(--radiance-orange);
+}
+
+.project-stars {
+    color: var(--radiance-orange);
+}
+
+/* ASCII art styling */
+.ascii-art {
+    color: var(--soul-cyan);
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+/* Links */
+a {
+    color: var(--lifeblood-blue);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Scrollbar */
+.terminal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal-body::-webkit-scrollbar-track {
+    background: var(--void-black);
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+    background: var(--void-purple);
+    border-radius: 4px;
+}
+
+.terminal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--soul-cyan);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .terminal {
+        min-height: 80vh;
+    }
+
+    .prompt {
+        font-size: 12px;
+    }
+
+    #command-input {
+        font-size: 12px;
+    }
+}
