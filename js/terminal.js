@@ -91,7 +91,11 @@ const terminal = {
                 this.clear();
                 break;
             case 'whoami':
-                this.print('visitor');
+                if (args.includes('--verbose') || args.includes('-v')) {
+                    this.showWhoamiVerbose();
+                } else {
+                    this.print('visitor');
+                }
                 break;
             case 'pwd':
                 this.print('/home/visitor/felixlynch.com');
@@ -806,6 +810,42 @@ const terminal = {
         this.print('');
         this.print(`<span class="output-info">Session uptime:</span> <span class="output-success">${uptime}</span>`);
         this.print(`<span class="output-dim">Started: ${new Date(this.startTime).toLocaleTimeString()}</span>`);
+        this.print('');
+    },
+
+    showWhoamiVerbose() {
+        const ua = navigator.userAgent;
+        const platform = navigator.platform;
+        const lang = navigator.language;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const screenW = screen.width;
+        const screenH = screen.height;
+
+        // Try to parse browser
+        let browser = 'Unknown';
+        if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Chrome')) browser = 'Chrome';
+        else if (ua.includes('Safari')) browser = 'Safari';
+        else if (ua.includes('Edge')) browser = 'Edge';
+
+        // Try to parse OS
+        let os = platform;
+        if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iOS')) os = 'iOS';
+
+        this.print('');
+        this.print('<span class="output-highlight">═══ Visitor Info ═══</span>');
+        this.print('');
+        this.print(`<span class="output-info">User:</span>      visitor`);
+        this.print(`<span class="output-info">Browser:</span>   ${browser}`);
+        this.print(`<span class="output-info">OS:</span>        ${os}`);
+        this.print(`<span class="output-info">Language:</span>  ${lang}`);
+        this.print(`<span class="output-info">Viewport:</span>  ${width}x${height}`);
+        this.print(`<span class="output-info">Screen:</span>    ${screenW}x${screenH}`);
         this.print('');
     },
 
