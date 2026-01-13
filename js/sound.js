@@ -2,11 +2,25 @@
 const sound = {
     enabled: false,
     audioCtx: null,
-    volume: 0.1,
+    flipBuffer: null,
+    volume: 0.3,
 
     init() {
         // Check localStorage for preference
         this.enabled = localStorage.getItem('sound_enabled') === 'true';
+        // Preload flip sound
+        this.loadFlipSound();
+    },
+
+    async loadFlipSound() {
+        try {
+            const response = await fetch('assets/flip.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            const ctx = this.getContext();
+            this.flipBuffer = await ctx.decodeAudioData(arrayBuffer);
+        } catch (e) {
+            console.log('Could not load flip sound:', e);
+        }
     },
 
     getContext() {
@@ -45,60 +59,23 @@ const sound = {
         osc.stop(ctx.currentTime + 0.03);
     },
 
-    // Split-flap mechanical flip sound
+    // Split-flap mechanical flip sound (uses preloaded audio file)
     flip() {
-        if (!this.enabled) return;
+        if (!this.enabled || !this.flipBuffer) return;
 
         const ctx = this.getContext();
-        const now = ctx.currentTime;
+        const source = ctx.createBufferSource();
+        source.buffer = this.flipBuffer;
 
-        // Create noise buffer for the mechanical "clack"
-        const bufferSize = ctx.sampleRate * 0.04; // 40ms
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
+        // Add slight pitch variation for realism
+        source.playbackRate.value = 0.9 + Math.random() * 0.2;
 
-        // Generate noise with quick decay
-        for (let i = 0; i < bufferSize; i++) {
-            const decay = Math.exp(-i / (bufferSize * 0.1));
-            data[i] = (Math.random() * 2 - 1) * decay;
-        }
+        const gain = ctx.createGain();
+        gain.gain.value = this.volume;
 
-        const noise = ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        // Bandpass filter for that plastic/mechanical sound
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 2000 + Math.random() * 500;
-        filter.Q.value = 2;
-
-        // Add a quick low "thunk"
-        const thunk = ctx.createOscillator();
-        thunk.frequency.value = 150 + Math.random() * 50;
-        thunk.type = 'sine';
-
-        const thunkGain = ctx.createGain();
-        thunkGain.gain.setValueAtTime(this.volume * 0.4, now);
-        thunkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-
-        // Main noise gain
-        const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(this.volume * 0.3, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-        // Connect
-        noise.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-
-        thunk.connect(thunkGain);
-        thunkGain.connect(ctx.destination);
-
-        // Play
-        noise.start(now);
-        noise.stop(now + 0.04);
-        thunk.start(now);
-        thunk.stop(now + 0.02);
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start();
     },
 
     // Enter/submit sound
