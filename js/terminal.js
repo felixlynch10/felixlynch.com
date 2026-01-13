@@ -56,6 +56,7 @@ const terminal = {
 
     async handleKeydown(e) {
         if (e.key === 'Enter') {
+            sound.enter();
             const cmd = this.input.value.trim();
             if (cmd) {
                 this.history.push(cmd);
@@ -63,6 +64,9 @@ const terminal = {
                 this.executeCommand(cmd);
             }
             this.input.value = '';
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            // Typewriter sound for regular characters
+            sound.typeClick();
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (this.historyIndex > 0) {
@@ -182,6 +186,9 @@ const terminal = {
             case 'figlet':
                 this.showFiglet(args.join(' '));
                 break;
+            case 'sound':
+                this.toggleSound(args[0]);
+                break;
             case 'fortune':
             case 'cowsay':
                 this.showFortune();
@@ -211,6 +218,7 @@ const terminal = {
                 this.print('<span class="output-info">Just kidding, you can\'t leave that easily.</span>');
                 break;
             default:
+                sound.error();
                 this.print(`<span class="output-error">command not found: ${this.escapeHtml(command)}</span>`);
                 this.print('Type <span class="output-highlight">help</span> for available commands.');
         }
@@ -331,7 +339,7 @@ const terminal = {
     async autocomplete() {
         const input = this.input.value;
         const parts = input.split(/\s+/);
-        const commands = ['help', 'ls', 'cd', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
+        const commands = ['help', 'ls', 'cd', 'cat', 'grep', 'open', 'clone', 'stats', 'latest', 'about', 'skills', 'social', 'contact', 'history', 'man', 'uptime', 'time', 'visitors', 'figlet', 'sound', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch', 'fortune', 'matrix'];
 
         // If just typing a command (no space yet)
         if (parts.length === 1) {
@@ -421,6 +429,7 @@ const terminal = {
         this.print('  <span class="output-success">contact</span>      Contact information');
         this.print('  <span class="output-success">neofetch</span>     System info');
         this.print('  <span class="output-success">fortune</span>      Random dev wisdom');
+        this.print('  <span class="output-success">sound</span>        Toggle sound effects');
         this.print('  <span class="output-success">clear</span>        Clear terminal (or Ctrl+L)');
         this.print('  <span class="output-success">help</span>         Show this help');
         this.print('');
@@ -1180,6 +1189,32 @@ const terminal = {
         this.print('<span class="output-success">Follow the white rabbit.</span>');
         this.print('');
         this.print('<span class="output-info">Knock, knock, Neo.</span>');
+        this.print('');
+    },
+
+    toggleSound(arg) {
+        this.print('');
+
+        if (arg === 'on') {
+            sound.enabled = true;
+            localStorage.setItem('sound_enabled', 'true');
+            this.print('<span class="output-success">Sound effects enabled</span>');
+            sound.success();
+        } else if (arg === 'off') {
+            sound.enabled = false;
+            localStorage.setItem('sound_enabled', 'false');
+            this.print('<span class="output-info">Sound effects disabled</span>');
+        } else {
+            const enabled = sound.toggle();
+            if (enabled) {
+                this.print('<span class="output-success">Sound effects enabled</span>');
+                sound.success();
+            } else {
+                this.print('<span class="output-info">Sound effects disabled</span>');
+            }
+        }
+
+        this.print('<span class="output-dim">Usage: sound [on|off]</span>');
         this.print('');
     }
 };
