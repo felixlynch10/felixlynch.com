@@ -96,6 +96,37 @@ const terminal = {
             case 'fastfetch':
                 this.showNeofetch();
                 break;
+            case 'time':
+                this.print(`<span class="output-info">${new Date().toLocaleTimeString()}</span>`);
+                break;
+            case 'fortune':
+            case 'cowsay':
+                this.showFortune();
+                break;
+            case 'matrix':
+                this.showMatrix();
+                break;
+            case 'sudo':
+                this.print('<span class="output-error">Nice try! 😏</span>');
+                break;
+            case 'rm':
+                if (args.includes('-rf') || args.includes('-rf/')) {
+                    this.print('<span class="output-error">I don\'t think so...</span>');
+                } else {
+                    this.print('<span class="output-error">Permission denied (this is a portfolio, not a real shell)</span>');
+                }
+                break;
+            case 'vim':
+            case 'nano':
+            case 'emacs':
+                this.print(`<span class="output-warning">${command}: command not found</span>`);
+                this.print('<span class="output-info">I use Neovim btw</span>');
+                break;
+            case 'exit':
+            case 'logout':
+                this.print('Goodbye! 👋');
+                this.print('<span class="output-info">Just kidding, you can\'t leave that easily.</span>');
+                break;
             default:
                 this.print(`<span class="output-error">command not found: ${command}</span>`);
                 this.print('Type <span class="output-highlight">help</span> for available commands.');
@@ -211,10 +242,13 @@ const terminal = {
         this.print('  <span class="output-success">cat</span> <name>   Show project details');
         this.print('  <span class="output-success">about</span>        About me');
         this.print('  <span class="output-success">contact</span>      Contact information');
+        this.print('  <span class="output-success">neofetch</span>     System info');
+        this.print('  <span class="output-success">fortune</span>      Random dev wisdom');
         this.print('  <span class="output-success">clear</span>        Clear terminal (or Ctrl+L)');
         this.print('  <span class="output-success">help</span>         Show this help');
         this.print('');
         this.print('<span class="output-info">Tip: Use Tab for autocomplete, ↑↓ for history</span>');
+        this.print('<span class="output-info">Easter eggs: try matrix, sudo, vim, exit...</span>');
         this.print('');
     },
 
@@ -330,6 +364,37 @@ const terminal = {
         this.print('<span class="ascii-art">       `Y$$b.</span>');
         this.print('<span class="ascii-art">          `"Y$b._</span>');
         this.print('<span class="ascii-art">              `"""</span>');
+        this.print('');
+    },
+
+    showFortune() {
+        const fortunes = [
+            "You will mass merge conflicts in your future.",
+            "A bug is just an undocumented feature.",
+            "The best code is no code at all.",
+            "git push --force is never the answer. Except when it is.",
+            "There are only two hard things in CS: cache invalidation and naming things.",
+            "It works on my machine ¯\\_(ツ)_/¯",
+            "sudo rm -rf / will solve all your problems. Don't actually do this.",
+            "The code you write today is tomorrow's legacy code.",
+            "Comments lie. Code doesn't.",
+            "First, solve the problem. Then, write the code.",
+            "Weeks of coding can save hours of planning.",
+            "A user interface is like a joke. If you have to explain it, it's not that good."
+        ];
+        const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+        this.print('');
+        this.print(`<span class="output-success">🔮 ${fortune}</span>`);
+        this.print('');
+    },
+
+    showMatrix() {
+        this.print('');
+        this.print('<span class="output-success">Wake up, Neo...</span>');
+        this.print('<span class="output-success">The Matrix has you...</span>');
+        this.print('<span class="output-success">Follow the white rabbit.</span>');
+        this.print('');
+        this.print('<span class="output-info">Knock, knock, Neo.</span>');
         this.print('');
     }
 };

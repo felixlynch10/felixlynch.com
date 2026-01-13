@@ -2,19 +2,54 @@
 const GITHUB_USERNAME = 'felixlynch10';
 const GITHUB_API = 'https://api.github.com';
 
-// Cache for repos
+// Cache settings
+const CACHE_KEY = 'github_repos_cache';
+const CACHE_TIME_KEY = 'github_repos_time';
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+// Memory cache
 let reposCache = null;
-let lastFetch = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Featured projects (shown first)
 const FEATURED_REPOS = ['focus', 'felixlynch.com'];
 
-async function fetchRepos() {
-    const now = Date.now();
+// Load cache from localStorage on init
+function loadCacheFromStorage() {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
 
-    // Return cache if valid
-    if (reposCache && (now - lastFetch) < CACHE_DURATION) {
+        if (cached && cacheTime) {
+            const age = Date.now() - parseInt(cacheTime);
+            if (age < CACHE_DURATION) {
+                reposCache = JSON.parse(cached);
+                return true;
+            }
+        }
+    } catch (e) {
+        console.log('Cache load failed:', e);
+    }
+    return false;
+}
+
+// Save cache to localStorage
+function saveCacheToStorage(repos) {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(repos));
+        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+    } catch (e) {
+        console.log('Cache save failed:', e);
+    }
+}
+
+async function fetchRepos() {
+    // Check memory cache first
+    if (reposCache) {
+        return reposCache;
+    }
+
+    // Try localStorage cache
+    if (loadCacheFromStorage()) {
         return reposCache;
     }
 
@@ -46,7 +81,8 @@ async function fetchRepos() {
                 return new Date(b.updated_at) - new Date(a.updated_at);
             });
 
-        lastFetch = now;
+        // Save to localStorage
+        saveCacheToStorage(reposCache);
         return reposCache;
 
     } catch (error) {
