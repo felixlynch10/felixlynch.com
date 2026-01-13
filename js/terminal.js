@@ -95,6 +95,9 @@ const terminal = {
             case 'echo':
                 this.print(this.escapeHtml(args.join(' ')));
                 break;
+            case 'grep':
+                await this.grepProjects(args[0]);
+                break;
             case 'neofetch':
             case 'fastfetch':
                 this.showNeofetch();
@@ -210,7 +213,7 @@ const terminal = {
 
     autocomplete() {
         const cmd = this.input.value.toLowerCase();
-        const commands = ['help', 'ls', 'cat', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
+        const commands = ['help', 'ls', 'cat', 'grep', 'about', 'skills', 'contact', 'clear', 'whoami', 'pwd', 'date', 'echo', 'neofetch'];
         const match = commands.find(c => c.startsWith(cmd));
         if (match) {
             this.input.value = match;
@@ -261,6 +264,7 @@ const terminal = {
         this.print('');
         this.print('  <span class="output-success">ls</span>           List all projects');
         this.print('  <span class="output-success">cat</span> <name>   Show project details');
+        this.print('  <span class="output-success">grep</span> <term>  Search projects');
         this.print('  <span class="output-success">about</span>        About me');
         this.print('  <span class="output-success">skills</span>       Languages & tools');
         this.print('  <span class="output-success">contact</span>      Contact information');
@@ -301,6 +305,52 @@ const terminal = {
 
         this.print('<span class="output-info">Use</span> cat <name> <span class="output-info">for details</span>');
         this.print('');
+    },
+
+    async grepProjects(term) {
+        if (!term) {
+            this.print('<span class="output-error">Usage: grep <search-term></span>');
+            return;
+        }
+
+        this.print('');
+        this.print(`Searching for "<span class="output-highlight">${this.escapeHtml(term)}</span>"...`);
+
+        const repos = await fetchRepos();
+
+        if (!repos) {
+            this.print('<span class="output-error">Failed to fetch project data.</span>');
+            return;
+        }
+
+        const termLower = term.toLowerCase();
+        const matches = repos.filter(repo => {
+            const r = formatRepo(repo);
+            return r.name.toLowerCase().includes(termLower) ||
+                   r.description.toLowerCase().includes(termLower) ||
+                   r.language.toLowerCase().includes(termLower);
+        });
+
+        if (matches.length === 0) {
+            this.print(`<span class="output-warning">No matches found for "${this.escapeHtml(term)}"</span>`);
+            return;
+        }
+
+        this.print(`<span class="output-success">Found ${matches.length} match${matches.length > 1 ? 'es' : ''}:</span>`);
+        this.print('');
+
+        for (const repo of matches) {
+            const r = formatRepo(repo);
+            // Highlight the search term in results
+            const highlightTerm = (text) => {
+                const regex = new RegExp(`(${term})`, 'gi');
+                return text.replace(regex, '<span class="output-warning">$1</span>');
+            };
+
+            this.print(`  <span class="output-success">${highlightTerm(r.name)}</span>`);
+            this.print(`  <span class="output-info">${r.language}</span> · ${highlightTerm(r.description.substring(0, 60))}${r.description.length > 60 ? '...' : ''}`);
+            this.print('');
+        }
     },
 
     async showProject(name) {
