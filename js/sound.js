@@ -1,63 +1,32 @@
-// Sound effects using Web Audio API
+// Sound effects - HTML5 Audio for flip, Web Audio API for synth sounds
 const sound = {
     enabled: false,
+    flipAudio: null,
     audioCtx: null,
-    flipBuffer: null,
-    flipArrayBuffer: null,
     volume: 1.0,
 
     init() {
         // Check localStorage for preference
         this.enabled = localStorage.getItem('sound_enabled') === 'true';
-        // Preload flip sound data (but don't decode yet - need user interaction first)
-        this.preloadFlipSound();
-    },
-
-    async preloadFlipSound() {
-        try {
-            const response = await fetch('assets/flip.mp3');
-            this.flipArrayBuffer = await response.arrayBuffer();
-            console.log('Flip sound data preloaded');
-        } catch (e) {
-            console.log('Could not preload flip sound:', e);
-        }
-    },
-
-    async ensureFlipBuffer() {
-        if (this.flipBuffer) return true;
-        if (!this.flipArrayBuffer) return false;
-
-        try {
-            const ctx = this.getContext();
-            // Need to clone the ArrayBuffer since decodeAudioData detaches it
-            const bufferCopy = this.flipArrayBuffer.slice(0);
-            this.flipBuffer = await ctx.decodeAudioData(bufferCopy);
-            console.log('Flip sound decoded successfully');
-            return true;
-        } catch (e) {
-            console.log('Could not decode flip sound:', e);
-            return false;
-        }
+        // Preload flip sound
+        this.flipAudio = new Audio('assets/flip.mp3');
+        this.flipAudio.volume = this.volume;
+        this.flipAudio.preload = 'auto';
     },
 
     getContext() {
         if (!this.audioCtx) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // Resume if suspended (browser autoplay policy)
         if (this.audioCtx.state === 'suspended') {
             this.audioCtx.resume();
         }
         return this.audioCtx;
     },
 
-    async toggle() {
+    toggle() {
         this.enabled = !this.enabled;
         localStorage.setItem('sound_enabled', this.enabled.toString());
-        // Initialize audio on first enable (user interaction)
-        if (this.enabled) {
-            await this.ensureFlipBuffer();
-        }
         return this.enabled;
     },
 
@@ -84,32 +53,18 @@ const sound = {
         osc.stop(ctx.currentTime + 0.03);
     },
 
-    // Split-flap mechanical flip sound (uses preloaded audio file)
-    async flip() {
-        if (!this.enabled) return;
-
-        // Ensure buffer is loaded (lazy load on first use after user interaction)
-        if (!this.flipBuffer) {
-            await this.ensureFlipBuffer();
-            if (!this.flipBuffer) return;
-        }
+    // Split-flap mechanical flip sound
+    flip() {
+        if (!this.enabled || !this.flipAudio) return;
 
         try {
-            const ctx = this.getContext();
-            const source = ctx.createBufferSource();
-            source.buffer = this.flipBuffer;
-
-            // Add slight pitch variation for realism
-            source.playbackRate.value = 0.9 + Math.random() * 0.2;
-
-            const gain = ctx.createGain();
-            gain.gain.value = this.volume;
-
-            source.connect(gain);
-            gain.connect(ctx.destination);
-            source.start();
+            // Clone and play (allows overlapping sounds)
+            const sound = this.flipAudio.cloneNode();
+            sound.volume = this.volume;
+            sound.playbackRate = 0.9 + Math.random() * 0.2;
+            sound.play().catch(() => {}); // Ignore errors
         } catch (e) {
-            console.log('Error playing flip sound:', e);
+            // Ignore errors
         }
     },
 
